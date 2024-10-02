@@ -1,0 +1,11 @@
+PyYAML == 6.0
+tqdm == 4.62.3
+pandas==1.4.2
+accelerate==0.6.2
+yacs==0.1.8
+iopath==0.1.9
+scikit-learn==1.4.1.post1
+loralib==0.1.2
+pyod==2.0.1
+torch==2.1.1+cu118
+numpy

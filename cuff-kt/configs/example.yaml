@@ -1,0 +1,52 @@
+dataset_path: "./dataset"
+
+checkpoint_dir: .ckpts
+seed: 0
+method: 'none'
+control: 'none'
+ratio: 0
+exp: 'inter'
+convert: False
+
+
+dimkt_config:
+  embedding_size: 32
+  dropout: 0.1
+  batch_size: 512
+  difficult_levels: 100 # fixed
+
+atdkt_config:
+  embedding_size: 32
+  dropout: 0.1
+  num_layers: 1
+  num_attn_heads: 8
+  l1: 0.5
+  l2: 0.5
+  l3: 0.5
+  start: 50
+
+
+dkt_config:
+  embedding_size: 32
+  dropout: 0.1
+  
+train_config:
+  wl: 0.0
+  log_wandb_fold: True
+  sequence_option: "recent" # early or recent
+  seq_len: 100
+  batch_size: 512
+  eval_batch_size: 512
+  num_epochs: 300
+  print_epochs: 1
+  max_grad_norm: 2.0
+  learning_rate: 0.001
+  optimizer: adam
+  
+  loss: BCE
+
+  ## Model Save
+  save_model: False
+  save_epochs: 1
+  save_model_name: "tmp"
+  log_path: "logs"
