@@ -6,7 +6,7 @@ PyTorch implementation of [Cuff-KT](https://openreview.net/pdf?id=UVaPEthRKx).
 
 Place the [assist15](https://sites.google.com/site/assistmentsdata/datasets/2015-assistments-skill-builder-data), [comp](https://github.com/wahr0411/PTADisc), and [xes3g5m](https://github.com/ai4ed/XES3G5M) source files in the dataset directory, and process the data using the following commands respectively:
 
-```
+```python
 python preprocess_data.py --data_name assistments15
 python preprocess_data.py --data_name comp
 python preprocess_data.py --data_name xes3g5m
@@ -26,7 +26,7 @@ The statistics of the three datasets after processing are as follows:
 
 Git clone this repository and create conda environment:
 
-```
+```python
 conda create -n cuff-kt python=3.10.13
 conda activate cuff-kt
 pip install -r requirements.txt 
