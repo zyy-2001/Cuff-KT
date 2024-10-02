@@ -66,8 +66,8 @@ class Generator(nn.Module):
             [in_dimension] * 2,
             ([torch.nn.Tanh] * (1)) + [None]
         )
-        self.attention = SAA(in_dimension, 2)
-        self.attention_resp = SAA(in_dimension, 2)
+        self.SAA_question = SAA(in_dimension, 2)
+        self.SAA_response = SAA(in_dimension, 2)
         self.SFE = torch.nn.GRU(
             in_dimension,
             in_dimension,
@@ -102,8 +102,8 @@ class Generator(nn.Module):
         r = self._mlp_trans(r)
         s, _ = self.SFE(s)
         r, _ = self.SFE(r)
-        s = self.attention(s, attention_reweight=attention_reweight)
-        r = self.attention_resp(r, True, attention_reweight=attention_reweight)
+        s = self.SAA_question(s, attention_reweight=attention_reweight)
+        r = self.SAA_response(r, True, attention_reweight=attention_reweight)
         s = s + r
 
         batch_size = x.size()[0]
