@@ -16,7 +16,7 @@ python preprocess_data.py --data_name dbe_kt22
 
 You can also download the dataset from [dataset](https://drive.google.com/drive/folders/1egDh9SZGHrIx1ZHiKZS2udE0-uEFRPa7?usp=sharing) and place it in the `dataset` directory.
 
-The statistics of the three datasets after processing are as follows:
+The statistics of the five datasets after processing are as follows:
 
 | Datasets | #learners | #questions | #concepts | #interactions |
 | :------: | :-------: | :--------: | :-------: | :-----------: |
@@ -44,6 +44,7 @@ Alternatively, download the environment package from [environment](https://drive
 - Extract the downloaded environment package to the conda environment using the command:
 ```python
 tar -xzvf cuff.tar.gz -C /anaconda (or miniconda)/envs/cuff/
+conda activate cuff
 ```
 
 ### Training & Testing
