@@ -367,6 +367,114 @@ def prepare_xes3g5m(
 
 
 
+def prepare_dbe_kt22(data_name: str, min_user_inter_num: int, remove_nan_skills: bool):
+    relation_path = os.path.join(os.path.join(BASE_PATH, "dbe_kt22/Question_KC_Relationships.csv"))
+    relation_df = pd.read_csv(relation_path)
+    data_path = os.path.join(BASE_PATH, data_name)
+    df = pd.read_csv(os.path.join(data_path, "Transaction.csv"))
+    
+    df = df.rename(
+        columns={
+            "start_time": "timestamp",
+            "student_id": "user_id",
+            "question_id": "item_id",
+            "answer_state": "correct"
+        }
+    )
+
+    relation_df = relation_df.rename(
+        columns={
+            "knowledgecomponent_id": "skill_id",
+            "question_id": "item_id",
+        }
+    )
+
+    missing_items = df[~df['item_id'].isin(relation_df['item_id'])]
+    if not missing_items.empty:
+        print(f"warning, missing item ids:")
+        print(missing_items[['item_id']])
+    assert len(missing_items) == 0
+    df = pd.merge(df, relation_df, on='item_id', how='left')
+
+
+    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+    min_timestamp = df["timestamp"].min()
+    df["timestamp"] = df["timestamp"] - min_timestamp
+    df["timestamp"] = df["timestamp"].apply(lambda x: x.total_seconds()).astype(np.int64)
+
+    df['correct'] = df['correct'].replace({'TRUE': 1, 'FALSE': 0})
+    df["correct"] = df["correct"].astype(np.int32)
+
+    
+
+    df["user_id"] = np.unique(df["user_id"], return_inverse=True)[1]
+    df["item_id"] = np.unique(df["item_id"], return_inverse=True)[1]
+    df["skill_id"] = np.unique(df["skill_id"], return_inverse=True)[1]
+    
+    print("# Users: {}".format(df["user_id"].nunique()))
+    print("# Skills: {}".format(df["skill_id"].nunique()))
+    print("# Items: {}".format(df["item_id"].nunique()))
+    print("# Interactions: {}".format(len(df)))
+
+
+    # Filter nan skills
+    if remove_nan_skills:
+        df = df[~df["skill_id"].isnull()]
+    else:
+        df.loc[df["skill_id"].isnull(), "skill_id"] = -1
+
+    user_wise_lst = list()
+    for user, user_df in df.groupby("user_id"):
+        if len(user_df) >= min_user_inter_num:
+            filter_df = user_df.sort_values(by=["timestamp"])  # assure the sequence order
+            user_wise_lst.append(filter_df)
+
+    np.random.shuffle(user_wise_lst)
+    user_list = user_wise_lst
+    df = pd.concat(user_list).reset_index(drop=True)
+
+    # # Filter too short sequences
+    # df = df.groupby("user_id").filter(lambda x: len(x) >= min_user_inter_num)
+
+    df["user_id"] = np.unique(df["user_id"], return_inverse=True)[1]
+    df["item_id"] = np.unique(df["item_id"], return_inverse=True)[1]
+    df["skill_id"] = np.unique(df["skill_id"].astype(str), return_inverse=True)[1]
+
+    # Build Q-matrix
+    Q_mat = np.zeros((len(df["item_id"].unique()), len(df["skill_id"].unique())))
+    for item_id, skill_id in df[["item_id", "skill_id"]].values:
+        Q_mat[item_id, skill_id] = 1
+
+
+    print("# Users: {}".format(df["user_id"].nunique()))
+    print("# Skills: {}".format(df["skill_id"].nunique()))
+    print("# Items: {}".format(df["item_id"].nunique()))
+    print("# Interactions: {}".format(len(df)))
+
+    # Get unique skill id from combination of all skill ids
+    unique_skill_ids = np.unique(Q_mat, axis=0, return_inverse=True)[1]
+    df["skill_id"] = unique_skill_ids[df["item_id"]]
+
+    print("# Preprocessed Skills: {}".format(df["skill_id"].nunique()))
+    # Sort data temporally
+    df.sort_values(by="timestamp", inplace=True)
+
+    # Sort data by users, preserving temporal order for each user
+    df = pd.concat([u_df for _, u_df in df.groupby("user_id")])
+    df.to_csv(os.path.join(data_path, "original_df.csv"), sep="\t", index=False)
+
+    df = df[["user_id", "item_id", "timestamp", "correct", "skill_id"]]
+
+    df.reset_index(inplace=True, drop=True)
+
+    # Save data
+    with open(os.path.join(data_path, "question_skill_rel.pkl"), "wb") as f:
+        pickle.dump(csr_matrix(Q_mat), f)
+
+    sparse.save_npz(os.path.join(data_path, "q_mat.npz"), csr_matrix(Q_mat))
+    df.to_csv(os.path.join(data_path, "preprocessed_df.csv"), sep="\t", index=False)
+
+
 if __name__ == "__main__":
     parser = ArgumentParser(description="Preprocess KT datasets")
     parser.add_argument("--data_name", type=str, default="assistments15")
@@ -394,6 +502,12 @@ if __name__ == "__main__":
         )
     elif args.data_name == "xes3g5m":
         prepare_xes3g5m(
+            data_name=args.data_name,
+            min_user_inter_num=args.min_user_inter_num,
+            remove_nan_skills=args.remove_nan_skills
+        )
+    elif args.data_name == "dbe_kt22":
+        prepare_dbe_kt22(
             data_name=args.data_name,
             min_user_inter_num=args.min_user_inter_num,
             remove_nan_skills=args.remove_nan_skills

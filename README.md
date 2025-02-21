@@ -1,10 +1,10 @@
 # 🚀![1727842522286](assets/logo.png)Cuff-KT: Tackling Learners' Real-time Learning Pattern Adjustment via Tuning-Free Knowledge State-Guided Model Updating (KDD2025 submitted)
 
-PyTorch implementation of [Cuff-KT](https://openreview.net/pdf?id=rgHVWOmbaG).
+PyTorch implementation of [Cuff-KT](https://openreview.net/forum?id=rgHVWOmbaG).
 
 ## 🌟Data and Data Preprocessing
 
-Place the [assist15](https://sites.google.com/site/assistmentsdata/datasets/2015-assistments-skill-builder-data), [assist17](https://sites.google.com/view/assistmentsdatamining/dataset?authuser=0), [comp](https://github.com/wahr0411/PTADisc), [xes3g5m](https://github.com/ai4ed/XES3G5M), and [dbe-kt22] source files in the dataset directory, and process the data using the following commands respectively:
+Place the [assist15](https://sites.google.com/site/assistmentsdata/datasets/2015-assistments-skill-builder-data), [assist17](https://sites.google.com/view/assistmentsdatamining/dataset?authuser=0), [comp](https://github.com/wahr0411/PTADisc), [xes3g5m](https://github.com/ai4ed/XES3G5M), and [dbe-kt22](https://dataverse.ada.edu.au/dataset.xhtml?persistentId=doi:10.26193/6DZWOH) source files in the dataset directory, and process the data using the following commands respectively:
 
 ```python
 python preprocess_data.py --data_name assistments15
@@ -13,6 +13,8 @@ python preprocess_data.py --data_name comp
 python preprocess_data.py --data_name xes3g5m
 python preprocess_data.py --data_name dbe_kt22
 ```
+
+You can also download the dataset from [dataset](https://drive.google.com/drive/folders/1egDh9SZGHrIx1ZHiKZS2udE0-uEFRPa7?usp=sharing) and place it in the `dataset` directory.
 
 The statistics of the three datasets after processing are as follows:
 
@@ -31,39 +33,49 @@ The statistics of the three datasets after processing are as follows:
 Git clone this repository and create conda environment:
 
 ```python
-conda create -n cuff-kt python=3.10.13
-conda activate cuff-kt
+conda create -n cuff python=3.11.9
+conda activate cuff
 pip install -r requirements.txt 
+```
+Alternatively, download the environment package from [environment](https://drive.google.com/file/d/1cp88niNVqeITelsCUrOOxJxjPGcxvQQG/view?usp=sharing) and execute the following commands in sequence:
+
+- Navigate to the conda installation directory: /anaconda (or miniconda)/envs/
+- Create a folder named `cuff` in that directory
+- Extract the downloaded environment package to the conda environment using the command:
+```python
+tar -xzvf cuff.tar.gz -C /anaconda (or miniconda)/envs/cuff/
 ```
 
 ### Training & Testing
 
-Our model experiments are conducted on two NVIDIA RTX 3090 24GB GPUs. You can execute it directly using the following commands:
+You can execute experiments directly using the following commands:
 
 - Controllable Parameter Generation
 
 ```python
-CUDA_VISIBLE_DEVICES=0 python main.py --exp intra --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --control [ecod, pca, iforest, lof, cuff] --ratio [0, 0.2, 0.4, 0.6, 0.8, 1] # generator generates parameters for dkt and atdkt
-CUDA_VISIBLE_DEVICES=0 python main.py --exp intra --model_name [dkvmn, stablekt, dimkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --control [ecod, pca, iforest, lof, cuff] --ratio [0, 0.2, 0.4, 0.6, 0.8, 1] --convert True # generator inserts parameters for dimkt
+CUDA_VISIBLE_DEVICES=0 python main.py --exp intra --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --control [ecod, pca, iforest, lof, cuff] --ratio [0, 0.2, 0.4, 0.6, 0.8, 1]
+CUDA_VISIBLE_DEVICES=0 python main.py --exp intra --model_name [dkvmn, stablekt, dimkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --control [ecod, pca, iforest, lof, cuff] --ratio [0, 0.2, 0.4, 0.6, 0.8, 1] --convert True
 ```
 
 - Tuning-Free and Fast Prediction
 - - baselines
 
 ```python
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, dkvmn, atdkt, stablekt, dimkt] --data_name [assistments15, comp, xes3g5m]
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, dkvmn, atdkt, stablekt, dimkt] --data_name [assistments15, comp, xes3g5m] --method [fft, adapter, bitfit]
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22]
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --convert True
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method [fft, adapter, bitfit]
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method [fft, adapter, bitfit]
 ```
 
 - - cuff-kt
 ```python
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt, dimkt] --data_name [assistments15, comp, xes3g5m] --method cuff --rank 1
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt] --data_name [assistments15, comp, xes3g5m] --method cuff --rank 1 --convert True
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --convert True
 ```
 
 - Flexible Application
 
 ```python
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt, dimkt] --data_name [assistments15, comp, xes3g5m] --method cuff+ --rank 1
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt] --data_name [assistments15, comp, xes3g5m] --method cuff+ --rank 1 --convert True
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff+ --rank 1
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff+ --rank 1 --convert True
 ```

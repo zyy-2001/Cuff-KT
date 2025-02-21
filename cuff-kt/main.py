@@ -19,6 +19,8 @@ from data_loaders import (
 from models.dkt import DKT
 from models.atdkt import ATDKT
 from models.dimkt import DIMKT
+from models.stablekt import stableKT
+from models.dkvmn import DKVMN
 from train import model_train
 from sklearn.model_selection import KFold
 from datetime import datetime, timedelta
@@ -48,6 +50,7 @@ def main(config):
     exp = config.exp
     rank = config.rank
     convert = config.convert
+    type = config.type
 
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -173,7 +176,6 @@ def main(config):
         
         p = p / np.sum(p)
         q = q / np.sum(q)
-        # return entropy(p, q)
         return jensen_shannon_divergence(p, q)
 
     if exp == 'inter':
@@ -255,6 +257,7 @@ def main(config):
         stus_ordered = heapq.nsmallest(len(stus_kl), stus_kl, key=stus_kl.get)
         users = stus_ordered
 
+
     for seed in range(5):
         np.random.seed(seed)
         torch.manual_seed(seed)
@@ -274,9 +277,19 @@ def main(config):
             model = DIMKT(convert, num_skills, num_questions, method, rank, **model_config)
             if control != 'none':
                 model_base = DIMKT(convert, num_skills, num_questions, 'none', rank, **model_config)
+        elif model_name == 'stablekt':
+            model_config = config.stablekt_config
+            model = stableKT(convert, num_skills, num_questions, method, rank, **model_config)
+            if control != 'none':
+                model_base = stableKT(convert, num_skills, num_questions, "none", rank, **model_config)
+        elif model_name == 'dkvmn':
+            model_config = config.dkvmn_config
+            model = DKVMN(convert, num_skills, method, rank, **model_config)
+            if control != 'none':
+                model_base = DKVMN(convert, num_skills, "none", rank, **model_config)
         
         if method == 'cuff' and control == 'none':
-            print(f'cuff_total_params: {sum(p.numel() for p in model.generator.parameters())/1000}K')
+            print(f'cuff_total_params: {sum(p.numel() for p in model.dpg.parameters())/1000}K')
             # import sys
             # sys.exit()
 
@@ -315,6 +328,12 @@ def main(config):
             test_dataset = dataset(df, seq_len, num_skills, num_questions, 0.9, 1.0)
             tune_train_dataset = dataset(df, seq_len, num_skills, num_questions, 0.7, 0.8)
             tune_valid_dataset = dataset(df, seq_len, num_skills, num_questions, 0.8, 0.9)
+
+        
+        if exp == 'inter':
+            print("train_ids", len(train_users))
+            print("valid_ids", len(valid_users))
+            print("test_ids", len(test_users))
 
         if "atdkt" in model_name: # atdkt
             train_loader = accelerator.prepare(
@@ -571,6 +590,7 @@ def main(config):
             opt_base,
             tune_train_loader,
             tune_valid_loader,
+            type
         )
 
         test_aucs.append(test_auc)
@@ -588,11 +608,11 @@ def main(config):
     now = (datetime.now() + timedelta(hours=9)).strftime("%Y%m%d-%H%M%S")  # KST time
 
     log_out_path = os.path.join(
-        os.path.join("logs", "5-fold-cv", "{}".format(exp), "{}".format(data_name), "{}".format(method))
+        os.path.join("logs", "5-fold-cv", "{}".format(exp), "{}".format(data_name), "{}".format(method), "rank{}".format(rank))
     )
     if control != 'none':
         log_out_path = os.path.join(
-            os.path.join("logs", "5-fold-cv", "{}".format(exp), "{}".format(data_name), "{}".format(method), "{}".format(control), "{}".format(ratio))
+            os.path.join("logs", "dkt-control", "{}".format(exp), "{}".format(data_name), "{}".format(method), "{}".format(control), "{}".format(ratio), "type{}".format(type))
         )
     os.makedirs(log_out_path, exist_ok=True)
     with open(os.path.join(log_out_path, "{}-{}".format(model_name, now)), "w") as f:
@@ -626,13 +646,13 @@ if __name__ == "__main__":
         type=str,
         default="dkt",
         help="The name of the model to train. \
-            The possible models are in [dkt, atdkt, dimkt]. \
+            The possible models are in [dkt, atdkt, dimkt, stablekt, dkvmn]. \
             The default model is dkt.",
     )
     parser.add_argument(
         "--data_name",
         type=str,
-        default="assistments15",
+        default="assistments09",
         help="The name of the dataset to use in training.",
     )
     parser.add_argument(
@@ -642,10 +662,10 @@ if __name__ == "__main__":
         "--batch_size", type=float, default=512, help="train batch size"
     )
     parser.add_argument(
-        "--embedding_size", type=int, default=32, help="embedding size"
+        "--embedding_size", type=int, default=64, help="embedding size"
     )
     parser.add_argument(
-        "--method", type=str, default='none', help="the possible methods are in [none, finetune(fft, adapter, bitfit), cuff, cuff+]"
+        "--method", type=str, default='none', help="the possible methods are in [none, finetune(fft, lora, adapter, bitfit), cuff, cuff+]"
     )
     parser.add_argument(
         "--control", type=str, default='none', help="the possible control methods are in [none, cuff, pca, ecod, iforest, lof]"
@@ -654,7 +674,7 @@ if __name__ == "__main__":
         "--ratio", type=float, default=0, help="the possible params. ratio are in [0, 0.2, 0.4, 0.6, 0.8, 1]"
     )
     parser.add_argument(
-        "--exp", type=str, default='inter', help="Experiments are conducted either between learner sequences (inter) or within learner sequences (intra)"
+        "--exp", type=str, default='inter', help="Experiments are conducted either between student sequences (inter) or within student sequences (intra)"
     )
     parser.add_argument(
         "--rank", type=int, default=0, help="the rank of cuff"
@@ -662,15 +682,16 @@ if __name__ == "__main__":
     parser.add_argument(
         "--convert", type=str2bool, default=False, help="Convert DIMKT's output settings to multi-concept output"
     )
+    parser.add_argument(
+        "--type", type=int, default=0, help="0 for default, 1 for w/o KL, 2 for w/o ZPD, 3 for w/o len"
+    )
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
     parser.add_argument("--optimizer", type=str, default="adam", help="optimizer")
     args = parser.parse_args()
-    assert args.model_name in ["dkt", "atdkt", "dimkt"]
-    assert args.method in ["none", "fft", "adapter", "bitfit", "cuff", "cuff+"]
+    assert args.model_name in ["dkt", "atdkt", "dimkt", "stablekt", "dkvmn"]
+    assert args.method in ["none", "fft", "lora", "adapter", "bitfit", "cuff", "cuff+"]
     assert args.control in ["none", "cuff", "pca", "ecod", "iforest", "lof"]
     assert args.exp in ["inter", "intra"]
-    if args.convert == True:
-        assert args.model_name == 'dimkt' and args.control == 'cuff'
 
     base_cfg_file = PathManager.open("configs/example.yaml", "r")
     base_cfg = yaml.safe_load(base_cfg_file)
@@ -697,7 +718,12 @@ if __name__ == "__main__":
         cfg.atdkt_config.dropout = args.dropout
     elif args.model_name == 'dimkt':  # dimkt 
         cfg.dimkt_config.dropout = args.dropout
+    elif args.model_name == 'stablekt':  # stablekt
+        cfg.stablekt_config.dropout = args.dropout
+    elif args.model_name == 'dkvmn':  # dkvmn
+        cfg.dkvmn_config.dropout = args.dropout
 
+    cfg.type = args.type
     cfg.freeze()
 
     print(cfg)
