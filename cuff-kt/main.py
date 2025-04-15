@@ -20,6 +20,8 @@ from models.dkt import DKT
 from models.atdkt import ATDKT
 from models.dimkt import DIMKT
 from models.stablekt import stableKT
+from models.diskt import DisKT
+from models.akt import AKT
 from models.dkvmn import DKVMN
 from train import model_train
 from sklearn.model_selection import KFold
@@ -282,6 +284,16 @@ def main(config):
             model = stableKT(convert, num_skills, num_questions, method, rank, **model_config)
             if control != 'none':
                 model_base = stableKT(convert, num_skills, num_questions, "none", rank, **model_config)
+        elif model_name == 'diskt':
+            model_config = config.diskt_config
+            model = DisKT(convert, num_skills, num_questions, method, rank, seq_len, **model_config)
+            if control != 'none':
+                model_base = DisKT(convert, num_skills, num_questions, "none", rank, **model_config)
+        elif model_name == 'akt':
+            model_config = config.akt_config
+            model = AKT(convert, num_skills, num_questions, method, rank, **model_config)
+            if control != 'none':
+                model_base = AKT(convert, num_skills, num_questions, "none", rank, **model_config)
         elif model_name == 'dkvmn':
             model_config = config.dkvmn_config
             model = DKVMN(convert, num_skills, method, rank, **model_config)
@@ -387,6 +399,66 @@ def main(config):
             test_loader = accelerator.prepare(
                 DataLoader(
                     ATDKTDatasetWrapper(
+                        test_dataset,
+                        seq_len,
+                        method,
+                        control,
+                    ),
+                    batch_size=eval_batch_size,
+                )
+            )
+        elif "dis" in model_name:  # diskt
+            train_loader = accelerator.prepare(
+                DataLoader(
+                    CounterDatasetWrapper(
+                        train_dataset,
+                        seq_len,
+                        method,
+                        control,
+                    ),
+                    batch_size=batch_size,
+                )
+            )
+
+            valid_loader = accelerator.prepare(
+                DataLoader(
+                    CounterDatasetWrapper(
+                        valid_dataset,
+                        seq_len,
+                        method,
+                        control,
+                    ),
+                    batch_size=eval_batch_size,
+                )
+            )
+
+            if method in ['fft', 'adapter', 'lora', 'bitfit', 'cuff+']:
+                tune_train_loader = accelerator.prepare(
+                    DataLoader(
+                        CounterDatasetWrapper(
+                            tune_train_dataset,
+                            seq_len,
+                            method,
+                            control,
+                        ),
+                        batch_size=eval_batch_size,
+                    )
+                )
+                tune_valid_loader = accelerator.prepare(
+                    DataLoader(
+                        CounterDatasetWrapper(
+                            tune_valid_dataset,
+                            seq_len,
+                            method,
+                            control,
+                        ),
+                        batch_size=eval_batch_size,
+                    )
+                )
+
+            test_loader = accelerator.prepare(
+                DataLoader(
+                    CounterDatasetWrapper(
                         test_dataset,
                         seq_len,
                         method,
@@ -646,7 +718,7 @@ if __name__ == "__main__":
         type=str,
         default="dkt",
         help="The name of the model to train. \
-            The possible models are in [dkt, atdkt, dimkt, stablekt, dkvmn]. \
+            The possible models are in [dkt, atdkt, dimkt, stablekt, diskt, akt, dkvmn]. \
             The default model is dkt.",
     )
     parser.add_argument(
@@ -688,7 +760,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
     parser.add_argument("--optimizer", type=str, default="adam", help="optimizer")
     args = parser.parse_args()
-    assert args.model_name in ["dkt", "atdkt", "dimkt", "stablekt", "dkvmn"]
+    assert args.model_name in ["dkt", "atdkt", "dimkt", "stablekt", "diskt", "akt", "dkvmn"]
     assert args.method in ["none", "fft", "lora", "adapter", "bitfit", "cuff", "cuff+"]
     assert args.control in ["none", "cuff", "pca", "ecod", "iforest", "lof"]
     assert args.exp in ["inter", "intra"]
@@ -720,6 +792,10 @@ if __name__ == "__main__":
         cfg.dimkt_config.dropout = args.dropout
     elif args.model_name == 'stablekt':  # stablekt
         cfg.stablekt_config.dropout = args.dropout
+    elif args.model_name == 'diskt':  # diskt
+        cfg.diskt_config.dropout = args.dropout
+    elif args.model_name == 'akt':  # akt
+        cfg.akt_config.dropout = args.dropout
     elif args.model_name == 'dkvmn':  # dkvmn
         cfg.dkvmn_config.dropout = args.dropout
 

@@ -6,9 +6,75 @@ from utils.augment_seq import (
     atdkt_kt_seqs,
     dimkt_kt_seqs,
     cuff_kt_seqs,
+    counter_kt_seqs,
 )
 import torch
 from collections import defaultdict
+
+class CounterDatasetWrapper(Dataset):
+    def __init__(
+        self,
+        ds: Dataset,
+        seq_len: int,
+        method: str,
+        control,
+    ):
+        super().__init__()
+        self.ds = ds
+        self.seq_len = seq_len
+        self.method = method
+        self.control = control
+
+        self.num_questions = self.ds.num_questions
+        self.num_skills = self.ds.num_skills
+        self.q_mask_id = self.num_questions + 1
+        self.s_mask_id = self.num_skills + 1
+        self.skill_difficulty = self.ds.skill_difficulty
+
+    def __len__(self):
+        return len(self.ds)
+
+    def __getitem_internal__(self, index):
+        original_data = self.ds[index]
+        q_seq = original_data["questions"]
+        s_seq = original_data["skills"]
+        r_seq = original_data["responses"]
+        attention_mask = original_data["attention_mask"]
+        q_seq_list = original_data["questions"].tolist()
+        s_seq_list = original_data["skills"].tolist()
+        r_seq_list = original_data["responses"].tolist()
+        t_seq_list = original_data["times"].tolist()
+
+        t = counter_kt_seqs(
+            q_seq_list,
+            s_seq_list,
+            r_seq_list,
+            t_seq_list,
+            self.skill_difficulty,
+            seed=index,
+            method=self.method,
+            control=self.control,
+        )
+
+        logit_r_seq, counter_attention_mask, correct_rates, weight_seq = t
+
+        logit_r_seq = torch.tensor(logit_r_seq, dtype=torch.float)
+        counter_attention_mask = torch.tensor(counter_attention_mask, dtype=torch.long)
+        attention_reweight = torch.tensor(weight_seq, dtype=torch.float)
+        correct_rates = torch.tensor(correct_rates, dtype=torch.float)
+
+        ret = {
+            "questions": q_seq,
+            "skills": s_seq,
+            "responses": (r_seq, logit_r_seq),
+            "attention_mask": (counter_attention_mask, attention_mask),
+            "attention_reweight": attention_reweight,
+            "correct_rates": correct_rates,
+        }
+        return ret
+
+    def __getitem__(self, index):
+        return self.__getitem_internal__(index)
 
 class ATDKTDatasetWrapper(Dataset):
     def __init__(
