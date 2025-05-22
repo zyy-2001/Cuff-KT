@@ -21,7 +21,6 @@ from models.atdkt import ATDKT
 from models.dimkt import DIMKT
 from models.stablekt import stableKT
 from models.diskt import DisKT
-from models.akt import AKT
 from models.dkvmn import DKVMN
 from train import model_train
 from sklearn.model_selection import KFold
@@ -289,11 +288,6 @@ def main(config):
             model = DisKT(convert, num_skills, num_questions, method, rank, seq_len, **model_config)
             if control != 'none':
                 model_base = DisKT(convert, num_skills, num_questions, "none", rank, **model_config)
-        elif model_name == 'akt':
-            model_config = config.akt_config
-            model = AKT(convert, num_skills, num_questions, method, rank, **model_config)
-            if control != 'none':
-                model_base = AKT(convert, num_skills, num_questions, "none", rank, **model_config)
         elif model_name == 'dkvmn':
             model_config = config.dkvmn_config
             model = DKVMN(convert, num_skills, method, rank, **model_config)
@@ -718,7 +712,7 @@ if __name__ == "__main__":
         type=str,
         default="dkt",
         help="The name of the model to train. \
-            The possible models are in [dkt, atdkt, dimkt, stablekt, diskt, akt, dkvmn]. \
+            The possible models are in [dkt, atdkt, dimkt, stablekt, diskt, dkvmn]. \
             The default model is dkt.",
     )
     parser.add_argument(
@@ -760,7 +754,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
     parser.add_argument("--optimizer", type=str, default="adam", help="optimizer")
     args = parser.parse_args()
-    assert args.model_name in ["dkt", "atdkt", "dimkt", "stablekt", "diskt", "akt", "dkvmn"]
+    assert args.model_name in ["dkt", "atdkt", "dimkt", "stablekt", "diskt", "dkvmn"]
     assert args.method in ["none", "fft", "lora", "adapter", "bitfit", "cuff", "cuff+"]
     assert args.control in ["none", "cuff", "pca", "ecod", "iforest", "lof"]
     assert args.exp in ["inter", "intra"]
@@ -794,10 +788,6 @@ if __name__ == "__main__":
         cfg.stablekt_config.dropout = args.dropout
     elif args.model_name == 'diskt':  # diskt
         cfg.diskt_config.dropout = args.dropout
-    elif args.model_name == 'akt':  # akt
-        cfg.akt_config.dropout = args.dropout
-    elif args.model_name == 'dkvmn':  # dkvmn
-        cfg.dkvmn_config.dropout = args.dropout
 
     cfg.type = args.type
     cfg.freeze()
