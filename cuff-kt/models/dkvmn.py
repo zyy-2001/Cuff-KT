@@ -37,7 +37,7 @@ class DKVMN(Module):
             self.p_layer = Linear(self.dim_s, 1)
 
         if self.method == 'cuff' or self.method == 'cuff+':
-            self.dpg = common.DPG(self.num_skills, self.dim_s, self.dim_s, self.dim_s, self.rank)
+            self.generator = common.Generator(self.num_skills, self.dim_s, self.dim_s, self.dim_s, self.rank)
 
         self.e_layer = Linear(self.dim_s, self.dim_s)
         self.a_layer = Linear(self.dim_s, self.dim_s)
@@ -98,7 +98,7 @@ class DKVMN(Module):
 
         p = self.p_layer(self.dropout_layer(f))
         if self.method in ["cuff", "cuff+"]:
-            p = self.dpg(p, r_input, q_input, attention_reweight)
+            p = self.generator(p, r_input, q_input, attention_reweight)
         
         if self.convert:
             p = self.trans(p)

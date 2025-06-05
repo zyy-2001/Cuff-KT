@@ -1,6 +1,6 @@
 # 🚀![1727842522286](assets/logo.png)Cuff-KT: Tackling Learners' Real-time Learning Pattern Adjustment via Tuning-Free Knowledge State-Guided Model Updating (KDD2025)
 
-PyTorch implementation of Cuff-KT.
+PyTorch implementation of [Cuff-KT](https://arxiv.org/abs/2505.19543).
 
 
 <h5 align=center>

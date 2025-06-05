@@ -54,7 +54,7 @@ class stableKT(nn.Module):
                                     d_model=self.hidden_size, d_feature=self.hidden_size / num_attn_heads, d_ff=d_ff,  kq_same=self.kq_same, seq_len=seq_len, r=self.r, gamma=self.gamma, num_buckets = self.num_buckets,max_distance = self.max_distance)
 
         if self.method == 'cuff' or self.method == 'cuff+':
-            self.dpg = common.DPG(self.num_skills, self.hidden_size, self.embedding_size, self.hidden_size, self.rank)
+            self.generator = common.Generator(self.num_skills, self.hidden_size, self.embedding_size, self.hidden_size, self.rank)
 
 
         if self.convert:
@@ -130,7 +130,7 @@ class stableKT(nn.Module):
         output = self.out(concat_q)
         m = nn.Sigmoid()
         if self.method == 'cuff' or self.method == 'cuff+':
-            output = self.dpg(output, r_input, c_input, attention_reweight)
+            output = self.generator(output, r_input, c_input, attention_reweight)
 
         state = None
         if self.convert:
