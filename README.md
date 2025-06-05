@@ -66,7 +66,7 @@ You can execute experiments directly using the following commands:
 
 ```python
 CUDA_VISIBLE_DEVICES=0 python main.py --exp intra --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --control [ecod, pca, iforest, lof, cuff] --ratio [0, 0.2, 0.4, 0.6, 0.8, 1]
-CUDA_VISIBLE_DEVICES=0 python main.py --exp intra --model_name [dkvmn, stablekt, dimkt, diskt, akt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --control [ecod, pca, iforest, lof, cuff] --ratio [0, 0.2, 0.4, 0.6, 0.8, 1] --convert True
+CUDA_VISIBLE_DEVICES=0 python main.py --exp intra --model_name [dkvmn, stablekt, dimkt, diskt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --control [ecod, pca, iforest, lof, cuff] --ratio [0, 0.2, 0.4, 0.6, 0.8, 1] --convert True
 ```
 
 - Tuning-Free and Fast Prediction
@@ -74,23 +74,23 @@ CUDA_VISIBLE_DEVICES=0 python main.py --exp intra --model_name [dkvmn, stablekt,
 
 ```python
 CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22]
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt, diskt, akt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --convert True
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt, diskt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --convert True
 CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method [fft, adapter, bitfit]
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt, diskt, akt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method [fft, adapter, bitfit]  --convert True
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt, diskt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method [fft, adapter, bitfit]  --convert True
 ```
 
 - - cuff-kt
 
 ```python
 CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt, diskt, akt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --convert True
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt, diskt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff --rank 1 --convert True
 ```
 
 - Flexible Application
 
 ```python
 CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkt, atdkt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff+ --rank 1
-CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt, diskt, akt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff+ --rank 1 --convert True
+CUDA_VISIBLE_DEVICES=0 python main.py --exp [intra, inter] --model_name [dkvmn, stablekt, dimkt, diskt] --data_name [assistments15, assistments17, comp, xes3g5m, dbe_kt22] --method cuff+ --rank 1 --convert True
 ```
 
 

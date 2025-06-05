@@ -8,6 +8,18 @@ ratio: 0
 exp: 'inter'
 convert: False
 
+diskt_config:
+  embedding_size: 32
+  num_blocks: 2
+  kq_same: True
+  num_attn_heads: 8
+  final_fc_dim: 512
+  final_fc_dim2: 256
+  d_ff: 1024
+  l2: 1e-5
+  dropout: 0.05
+  separate_qr: False
+
 
 dkvmn_config:
   dim_s: 64
