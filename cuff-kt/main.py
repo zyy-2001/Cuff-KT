@@ -14,6 +14,7 @@ from data_loaders import (
     PreprocessQuestionSkillDataset,
     ATDKTDatasetWrapper,
     DimKTDatasetWrapper,
+    CounterDatasetWrapper,
     CuffDatasetWrapper,
 )
 from models.dkt import DKT
